@@ -20,7 +20,7 @@ There are 10 patients in the data set
 
 The general formular for random intercept model is,
 $$y_{ij} = X\beta + u_{j} + e_{ij} \hspace{10pt} \mbox{where} \hspace{10pt} e_{ij} \sim N(0,\sigma^{2}_{e}) \hspace{10pt} \mbox{and} \hspace{10pt} u_{j} \sim N(0,\sigma^{2}_{u})$$
-According to the spaghetti plot, the baseline is not same for each level. SO we use a random intercept model (RIM) to address this matter.  
+According to the spaghetti plot, the baseline is not same for each level. So we use a random intercept model (RIM) to address this matter.  
 
 ```{r}
 View(data)
@@ -74,7 +74,7 @@ summary(fit2)
 ```
 
 
-### Residual Diagnostic
+### Residual Diagnostic -Using DHARMa
 ```{r warning=F}
 library(DHARMa)
 citation("DHARMa")
