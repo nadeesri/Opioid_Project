@@ -1,0 +1,85 @@
+---
+title: "Generalize linear mixed models for Dummy data set"
+author: "Nadeesri Wijekoon"
+date: "July 16, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r warning=F }
+source("dummyData.R")
+library(lme4)
+```
+The data set is consist of unbalanced mistimed longitudinal data which is normal in real world data analysis. We can use mixed models to analyse these type of data to identify the variation of each level (patient). 
+
+There are 10 patients in the data set 
+## Random intercept models - GLMM for subject specific
+
+The general formular for random intercept model is,
+$$y_{ij} = X\beta + u_{j} + e_{ij} \hspace{10pt} \mbox{where} \hspace{10pt} e_{ij} \sim N(0,\sigma^{2}_{e}) \hspace{10pt} \mbox{and} \hspace{10pt} u_{j} \sim N(0,\sigma^{2}_{u})$$
+According to the spaghetti plot, the baseline is not same for each level. SO we use a random intercept model (RIM) to address this matter.  
+
+```{r}
+View(data)
+data<-data[,-c(2,3,6)]
+```
+
+The first RIM, we consider both ID and WT is random. 
+```{r warning=F}
+formula1<-BIN_MFS~scale(TIME)+scale(TIME)*scale(DOSE)+scale(WT)+(1|ID)+(1|WT)
+fit1<-glmer(formula1,family = binomial(link="logit"),data=data)
+summary(fit1)
+```
+
+We can see that weight is not significant at 5\% significance level. We will fit the same model again without  the random effect of WT.
+
+```{r}
+formula2<-BIN_MFS~scale(TIME)+scale(TIME)*scale(DOSE)+scale(WT)+(1|ID)
+fit1.WT<-glmer(formula2,family = binomial(link="logit"),data=data)
+summary(fit1.WT)
+```
+
+Now the all the estimates of the model are significant at 5\% siginificance level. But AIC, BIC values are large in fit1.WT model than fit1.
+
+Likelihood ratio test for two models,
+```{r}
+library(lmtest)
+lrtest(fit1,fit1.WT)
+```
+
+According to the results, we can conclude that fit1 model is better under 5\% significance level.
+
+Now we will remove the fixed effect of WT too,
+```{r warning=F}
+formula1<-BIN_MFS~scale(TIME)+scale(DOSE)+scale(TIME)*scale(DOSE)+(1|ID)+(1|WT)
+fit1.WTRemove<-glmer(formula1,family = binomial,na.action = na.omit,data=data)
+summary(fit1.WTRemove)
+```
+
+
+```{r warning=F}
+lrtest(fit1,fit1.WTRemove)
+```
+
+fit1.WTRemove (fixed effect of WT has removed but random effect exist). is better.
+
+## Random intercept model and Slope model
+```{r warning=F}
+formula2<-BIN_MFS~scale(TIME)+scale(DOSE)+scale(TIME)*scale(DOSE)+scale(WT)+(1+WT|ID)+(1|ID)
+fit2<-glmer(formula2,family = binomial,data=data)
+summary(fit2)
+```
+
+
+### Residual Diagnostic
+```{r warning=F}
+library(DHARMa)
+citation("DHARMa")
+simulationOutput <- simulateResiduals(fittedModel = fit1.WTRemove, n = 250,use.u=T)
+plot(simulationOutput)
+testUniformity(simulationOutput = simulationOutput)
+testDispersion(simulationOutput)
+```

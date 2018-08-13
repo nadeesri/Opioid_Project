@@ -1,0 +1,98 @@
+---
+title: "Descriptive Analysis for the dummy data"
+author: "Nadeesri Wijekoon"
+date: "July 19, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r warning=F }
+source("dummyData.R")
+library(lme4)
+library(ggplot2)
+library(gridExtra)
+library(grid)
+data<-data[,-1]
+```
+
+Summary Statistics for data are given below
+```{r warning=F}
+summary(data)
+```
+
+We can see that MFS, AMT BIN_MFS and PRIOR_BIN_MFS variables have large number of missing values compared to other variables in the data set. Mean dose of Morphine is 198.4 mg and maxmimum were given is 480mg.
+
+```{r}
+interaction.plot(TIME,BIN_MFS,MFS,type = "b",data=data)
+```
+
+### Boxplots of Weights of babies by BIN_MFS. 
+```{r warning=F}
+library(ggplot2)
+p<-ggplot(data, aes(x=BIN_MFS, y=WT)) + 
+  geom_boxplot()+labs(title="Boxplot of Weights of babies by BIN_MFS")
+q<-ggplot(data, aes(x=BIN_MFS, y=AMT)) + 
+  geom_boxplot()+labs(title="Boxplot of AMT of babies by BIN_MFS")
+grid.arrange(p,q,ncol=2,nrow=1)
+```
+
+
+### Dose and MFS variation with time
+Removed AMT variable and BIN_MFS and PRIOR_BIN_MFS since those variables have considerable amount of missing values. 
+```{r warning=F}
+data.na<-data[,-c(3,5,6)]
+data.na<-na.omit(data.na)
+#View(data.na)
+```
+
+#### For all the patients TIME vs. MFS
+
+```{r warning=F}
+library(ggplot2)
+library(gridExtra)
+library(grid)
+ggplot(data.na, aes(x=TIME, y=MFS, color=factor(ID))) +
+  stat_summary(fun.y = mean, geom = "point") +
+  stat_summary(fun.y = mean, geom = "line")+geom_smooth()
+
+store<-list()
+for(i in 1:10){
+  data.one<-subset(data.na,ID==i,)
+  store[[i]]<-ggplot(data.one, aes(x=TIME, y=MFS)) +
+    geom_line() + geom_point() +
+    theme_bw()
+}
+
+title1=textGrob("TIME vs. MFS for each subject", gp=gpar(fontface="bold"))
+title2=textGrob("Left side is odd numbered subjects and right side is even numbered subjects", gp=gpar(fontface="bold"))
+grid.arrange(store[[1]],store[[2]],store[[3]],store[[4]],store[[5]],
+             store[[6]],store[[7]],store[[8]],store[[9]],store[[10]],ncol=2,nrow=5,top=title1,
+             bottom=title2)
+```
+
+
+#### For all the patients TIME vs. DOSE
+```{r warning=F}
+ggplot(data.na, aes(x=TIME, y=DOSE, color=factor(ID))) +
+  geom_line() + geom_point() +
+  theme_bw()
+
+store1<-list()
+for(i in 1:10){
+  data.one<-subset(data.na,ID==i,)
+  store1[[i]]<-ggplot(data.one, aes(x=TIME, y=DOSE)) +
+    geom_line() + geom_point() +
+    theme_bw()
+}
+
+title1=textGrob("TIME vs. DOSE for each subject", gp=gpar(fontface="bold"))
+title2=textGrob("Left side is odd numbered subjects and right side is even numbered subjects", gp=gpar(fontface="bold"))
+grid.arrange(store1[[1]],store1[[2]],store1[[3]],store1[[4]],store1[[5]],
+             store1[[6]],store1[[7]],store1[[8]],store1[[9]],store1[[10]],ncol=2,nrow=5,top=title1,
+             bottom=title2)
+
+```
+
